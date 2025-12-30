@@ -22,6 +22,16 @@ A completely customizable CV website where users can edit all text, add/delete s
 - **Add New Images**: Add more images to your life section
 - **Delete Images**: Remove images you don't want
 
+### Link Customization
+- **Edit Email Link**: Hover over email, click pencil icon, enter new email
+- **Edit LinkedIn URL**: Hover over LinkedIn, click pencil icon, enter your URL
+- Both links update and save to localStorage
+
+### Typewriter Words
+- **Edit Words**: Click "Edit Words" button to customize cycling text under name
+- **Hide/Show**: Click "Hide" to remove typewriter effect, "Show" to restore
+- Enter custom words separated by commas (e.g., "Designer, Coder, Artist")
+
 ### Other Features
 - **Reset Button**: Restore everything to original state
 - **Visual Feedback**: Hover effects show what's editable
