@@ -644,6 +644,30 @@
         .hidden-file-input {
             display: none;
         }
+
+        /* Link edit button */
+        .edit-link-btn {
+            display: inline-flex;
+            align-items: center;
+            margin-left: 8px;
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            background: rgba(79, 209, 197, 0.2);
+            border: 1px solid rgba(79, 209, 197, 0.3);
+            border-radius: 4px;
+            color: #4fd1c5;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .contact-link:hover .edit-link-btn {
+            opacity: 1;
+        }
+
+        .edit-link-btn:hover {
+            background: rgba(79, 209, 197, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -676,17 +700,19 @@
 
             <div class="contact-links">
                 <div class="contact-icons">
-                    <a class="contact-link" href="mailto:cooperpenniman@gmail.com" title="Email">
+                    <a class="contact-link" id="emailLink" href="mailto:cooperpenniman@gmail.com" title="Email" data-editable-link="email">
                         <svg style="vertical-align:middle; margin-right:6px;" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l8 7 8-7V20H4z"/></svg>
                         <span data-editable="email">cooperpenniman@gmail.com</span>
+                        <button class="edit-link-btn" onclick="editLink('email', 'emailLink', 'mailto:', 'Enter email address:'); event.preventDefault();">✏️</button>
                     </a>
                     <span class="contact-link" title="Location" style="cursor:default;">
                         <svg style="vertical-align:middle; margin-right:6px;" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
                         <span data-editable="location">New York</span>
                     </span>
-                    <a class="contact-link" href="https://www.linkedin.com/in/cooper-penniman/" target="_blank" title="LinkedIn">
+                    <a class="contact-link" id="linkedinLink" href="https://www.linkedin.com/in/cooper-penniman/" target="_blank" title="LinkedIn" data-editable-link="linkedin">
                         <svg style="vertical-align:middle; margin-right:6px;" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm13.5 11.28h-3v-5.6c0-1.34-.03-3.07-1.87-3.07-1.87 0-2.16 1.46-2.16 2.97v5.7h-3v-10h2.89v1.36h.04c.4-.75 1.37-1.54 2.82-1.54 3.01 0 3.57 1.98 3.57 4.56v5.62z"/></svg>
                         LinkedIn
+                        <button class="edit-link-btn" onclick="editLink('linkedin', 'linkedinLink', '', 'Enter LinkedIn URL:'); event.preventDefault();">✏️</button>
                     </a>
                 </div>
                 <div class="bio" data-editable="bio" style="margin: 24px 0 0 0; color: #b3b3b3; font-size: 1.08rem; text-align: center; width: 100%;">
@@ -871,6 +897,10 @@
 
             // Store profile image
             originalContent['profileImageSrc'] = document.getElementById('profileImage').src;
+
+            // Store original links
+            originalContent['emailLink'] = 'mailto:cooperpenniman@gmail.com';
+            originalContent['linkedinLink'] = 'https://www.linkedin.com/in/cooper-penniman/';
         }
 
         // Initialize editable content
@@ -951,6 +981,14 @@
                 // Load profile image
                 if (data['profileImageSrc']) {
                     document.getElementById('profileImage').src = data['profileImageSrc'];
+                }
+
+                // Load links
+                if (data['emailLink']) {
+                    document.getElementById('emailLink').href = data['emailLink'];
+                }
+                if (data['linkedinLink']) {
+                    document.getElementById('linkedinLink').href = data['linkedinLink'];
                 }
             } catch (e) {
                 console.error('Error loading from localStorage:', e);
@@ -1203,6 +1241,35 @@
                 if (img) {
                     img.remove();
                     saveStructure();
+                }
+            }
+        }
+
+        // Edit Link
+        function editLink(key, elementId, prefix, promptMessage) {
+            const linkElement = document.getElementById(elementId);
+            const currentHref = linkElement.href;
+
+            // Remove prefix for display (e.g., "mailto:")
+            let currentValue = currentHref;
+            if (prefix && currentHref.startsWith(prefix)) {
+                currentValue = currentHref.substring(prefix.length);
+            }
+
+            const newValue = prompt(promptMessage, currentValue);
+
+            if (newValue !== null && newValue.trim() !== '') {
+                const newHref = prefix ? prefix + newValue.trim() : newValue.trim();
+                linkElement.href = newHref;
+                saveToLocalStorage(key + 'Link', newHref);
+
+                // Also update the text if it's an email
+                if (key === 'email') {
+                    const emailSpan = linkElement.querySelector('[data-editable="email"]');
+                    if (emailSpan) {
+                        emailSpan.textContent = newValue.trim();
+                        saveToLocalStorage('email', newValue.trim());
+                    }
                 }
             }
         }
