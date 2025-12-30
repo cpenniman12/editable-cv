@@ -32,6 +32,13 @@ A completely customizable CV website where users can edit all text, add/delete s
 - **Hide/Show**: Click "Hide" to remove typewriter effect, "Show" to restore
 - Enter custom words separated by commas (e.g., "Designer, Coder, Artist")
 
+### Section Management
+- **Hide/Show Sections**: Each section has a "Hide Section" button
+- **Synced Navigation**: Edit nav items or section titles - they sync automatically
+  - Change "Experience" in nav → updates "Experience" section title
+  - Change "Experience" section title → updates nav item
+- Visibility persists across page refreshes
+
 ### Other Features
 - **Reset Button**: Restore everything to original state
 - **Visual Feedback**: Hover effects show what's editable
