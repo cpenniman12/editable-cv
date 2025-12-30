@@ -668,6 +668,34 @@
         .edit-link-btn:hover {
             background: rgba(79, 209, 197, 0.3);
         }
+
+        /* Typewriter controls */
+        .typewriter-controls {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 8px;
+        }
+
+        .typewriter-btn {
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .typewriter-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: #ffffff;
+        }
+
+        .typewriter-container.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -693,8 +721,12 @@
                     </div>
                 </div>
                 <h1 class="name" data-editable="name">Cooper Penniman</h1>
-                <div class="typewriter-container">
+                <div class="typewriter-container" id="typewriterContainer">
                     <span id="typewriter-text" style="font-size:1.25rem; color:#9ca3af; font-weight:400;"></span>
+                </div>
+                <div class="typewriter-controls">
+                    <button class="typewriter-btn" onclick="editTypewriterWords()">Edit Words</button>
+                    <button class="typewriter-btn" id="toggleTypewriterBtn" onclick="toggleTypewriter()">Hide</button>
                 </div>
             </div>
 
@@ -873,6 +905,18 @@
         // Current image upload context
         let currentImageContext = null;
 
+        // Typewriter words
+        const defaultTypewriterWords = [
+            "Solution Designer",
+            "Disruptor",
+            "Technologist",
+            "Developer",
+            "Strategist",
+            "Collaborator"
+        ];
+        let typewriterWords = [...defaultTypewriterWords];
+        let typewriterVisible = true;
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             captureOriginalContent();
@@ -989,6 +1033,15 @@
                 }
                 if (data['linkedinLink']) {
                     document.getElementById('linkedinLink').href = data['linkedinLink'];
+                }
+
+                // Load typewriter settings
+                if (data['typewriterWords']) {
+                    typewriterWords = JSON.parse(data['typewriterWords']);
+                }
+                if (data['typewriterVisible'] !== undefined) {
+                    typewriterVisible = data['typewriterVisible'];
+                    updateTypewriterVisibility();
                 }
             } catch (e) {
                 console.error('Error loading from localStorage:', e);
@@ -1274,6 +1327,50 @@
             }
         }
 
+        // Edit Typewriter Words
+        function editTypewriterWords() {
+            const currentWords = typewriterWords.join(', ');
+            const instructions = 'Enter words separated by commas:\n(e.g., "Developer, Designer, Creator")';
+            const newWords = prompt(instructions, currentWords);
+
+            if (newWords !== null) {
+                const wordsArray = newWords.split(',').map(w => w.trim()).filter(w => w.length > 0);
+
+                if (wordsArray.length > 0) {
+                    typewriterWords = wordsArray;
+                    saveToLocalStorage('typewriterWords', JSON.stringify(typewriterWords));
+
+                    // Restart typewriter effect with new words
+                    wordIndex = 0;
+                    charIndex = 0;
+                    isDeleting = false;
+                } else {
+                    alert('Please enter at least one word.');
+                }
+            }
+        }
+
+        // Toggle Typewriter Visibility
+        function toggleTypewriter() {
+            typewriterVisible = !typewriterVisible;
+            saveToLocalStorage('typewriterVisible', typewriterVisible);
+            updateTypewriterVisibility();
+        }
+
+        // Update Typewriter Visibility
+        function updateTypewriterVisibility() {
+            const container = document.getElementById('typewriterContainer');
+            const toggleBtn = document.getElementById('toggleTypewriterBtn');
+
+            if (typewriterVisible) {
+                container.classList.remove('hidden');
+                toggleBtn.textContent = 'Hide';
+            } else {
+                container.classList.add('hidden');
+                toggleBtn.textContent = 'Show';
+            }
+        }
+
         // Handle image upload
         document.getElementById('imageUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -1329,15 +1426,7 @@
             }
         }
 
-        // Typewriter effect
-        const words = [
-            "Solution Designer",
-            "Disruptor",
-            "Technologist",
-            "Developer",
-            "Strategist",
-            "Collaborator"
-        ];
+        // Typewriter effect variables
         let wordIndex = 0;
         let charIndex = 0;
         let isDeleting = false;
@@ -1345,7 +1434,11 @@
         const typewriter = document.getElementById('typewriter-text');
 
         function typeLoop() {
-            const currentWord = words[wordIndex];
+            if (!typewriterVisible || typewriterWords.length === 0) {
+                return;
+            }
+
+            const currentWord = typewriterWords[wordIndex];
             if (!isDeleting && charIndex <= currentWord.length) {
                 typewriter.textContent = currentWord.substring(0, charIndex);
                 charIndex++;
@@ -1358,7 +1451,7 @@
                 charIndex--;
                 if (charIndex < 0) {
                     isDeleting = false;
-                    wordIndex = (wordIndex + 1) % words.length;
+                    wordIndex = (wordIndex + 1) % typewriterWords.length;
                     setTimeout(typeLoop, 500);
                     return;
                 }
