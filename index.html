@@ -1,0 +1,1306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editable CV - Double Click to Edit</title>
+    <link rel="icon" type="image/x-icon" href="data:image/x-icon;base64,AAABAAEAEBAAAAEAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAAAQAABILAAASCwAAAAAAAAAAAAD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A////AP///wD///8A">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: #ffffff;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 48, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Edit Controls */
+        .edit-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            display: flex;
+            gap: 12px;
+        }
+
+        .edit-btn {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .edit-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+
+        .edit-btn.reset {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        .edit-btn.reset:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .edit-indicator {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 8px 16px;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            color: #22c55e;
+            font-size: 0.85rem;
+            font-weight: 500;
+            z-index: 1000;
+            display: none;
+        }
+
+        /* Editable content styles */
+        [data-editable] {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        [data-editable]:hover {
+            background: rgba(255,255,255,0.05);
+            padding: 4px;
+            margin: -4px;
+            border-radius: 4px;
+        }
+
+        [data-editable].editing {
+            background: rgba(255,255,255,0.1);
+            padding: 4px;
+            margin: -4px;
+            border-radius: 4px;
+            outline: 2px solid rgba(79, 209, 197, 0.5);
+        }
+
+        /* Header */
+        .header {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .profile-section {
+            margin-bottom: 40px;
+        }
+
+        .profile-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 20px;
+            margin-bottom: 32px;
+            object-fit: cover;
+            border: 3px solid rgba(255,255,255,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            margin-top: 32px;
+        }
+
+        .name {
+            font-size: 4rem;
+            font-weight: 200;
+            letter-spacing: -2px;
+            margin-bottom: 12px;
+            color: #ffffff;
+        }
+
+        .tagline {
+            font-size: 1.25rem;
+            color: #9ca3af;
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+
+        .bio {
+            max-width: 520px;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            color: #d1d5db;
+            margin-bottom: 32px;
+        }
+
+        /* Navigation */
+        .nav-container {
+            margin-bottom: 60px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .nav {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
+            max-width: 600px;
+        }
+
+        .nav-item {
+            padding: 16px 24px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #9ca3af;
+        }
+
+        .nav-item:hover {
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .nav-item.active {
+            background: #ffffff;
+            color: #1a1a1a;
+            border-color: #ffffff;
+        }
+
+        /* Contact Links */
+        .contact-links {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 24px;
+            justify-content: center;
+            padding-bottom: 60px;
+        }
+        .contact-icons {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: center;
+        }
+        .contact-link, .contact-link:visited, .contact-link:active {
+            color: #fff !important;
+            text-decoration: none;
+            font-size: 1.1rem;
+            padding: 0;
+            border-bottom: none;
+            transition: color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .contact-link:hover {
+            color: #4fd1c5 !important;
+        }
+        .contact-icons svg {
+            color: #fff;
+        }
+        .bio {
+            margin: 16px 0 0 0 !important;
+            color: #b3b3b3;
+            font-size: 1.08rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        /* Content Sections */
+        .content {
+            min-height: 80vh;
+            padding: 80px 0 120px;
+        }
+
+        .section {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+            margin-bottom: 120px;
+            padding-bottom: 80px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .section:last-child {
+            border-bottom: none;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 200;
+            margin-bottom: 60px;
+            letter-spacing: -1px;
+            color: #ffffff;
+        }
+
+        /* Experience */
+        .timeline {
+            position: relative;
+            padding-left: 32px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 12px;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 48px;
+            padding-bottom: 48px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -26px;
+            top: 8px;
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border-radius: 50%;
+        }
+
+        .job-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .company {
+            color: #9ca3af;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+
+        .date {
+            color: #6b7280;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .description {
+            color: #d1d5db;
+            line-height: 1.6;
+            max-width: 500px;
+        }
+
+        /* Projects Grid */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .project-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 32px;
+            transition: all 0.2s ease;
+            text-align: left;
+            position: relative;
+        }
+
+        .project-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .project-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .tech-stack {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .project-description {
+            color: #d1d5db;
+            line-height: 1.6;
+        }
+
+        .project-description + .project-how {
+            margin-top: 12px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .project-how {
+            color: #b3b3b3;
+            font-size: 0.98rem;
+            margin-bottom: 0;
+        }
+
+        .project-icon-link.website {
+            color: #4fd1c5;
+            font-weight: 500;
+            margin-left: 4px;
+        }
+
+        .project-icon-link.website:hover {
+            color: #38b2ac;
+        }
+
+        /* Skills */
+        .skills-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 12px;
+        }
+
+        .skill-item {
+            padding: 24px 28px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #d1d5db;
+            transition: all 0.2s ease;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skill-item:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            color: #ffffff;
+        }
+
+        /* Education */
+        .education-list {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .education-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 32px;
+            margin-bottom: 24px;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .education-item:hover {
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .degree {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .school {
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        /* Writing */
+        .writing-list {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .writing-item {
+            padding: 32px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .writing-item:hover {
+            padding-left: 16px;
+        }
+
+        .writing-item:last-child {
+            border-bottom: none;
+        }
+
+        .writing-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .writing-date {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 12px;
+        }
+
+        .writing-excerpt {
+            color: #d1d5db;
+            line-height: 1.6;
+        }
+
+        /* Travel */
+        .travel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .travel-item {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .travel-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.08);
+        }
+
+        .travel-flag {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .travel-location {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 6px;
+        }
+
+        .travel-date {
+            color: #9ca3af;
+            font-size: 0.85rem;
+        }
+
+        /* Substack */
+        .substack-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .substack-carousel {
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            overflow: hidden;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.4s ease;
+            width: calc(100% * 8);
+        }
+
+        .carousel-slide {
+            width: 100%;
+            flex: 0 0 100%;
+            display: flex;
+            gap: 40px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .slide-image {
+            flex: 0 0 auto;
+            width: 300px;
+            max-width: 300px;
+            height: 200px;
+            border-radius: 12px;
+            object-fit: cover;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .slide-content {
+            flex: 1;
+            flex-shrink: 1;
+            text-align: left;
+            min-width: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+        }
+
+        .slide-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .slide-date {
+            color: #9ca3af;
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+        }
+
+        .slide-excerpt {
+            color: #d1d5db;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .slide-link {
+            display: inline-flex;
+            align-items: center;
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .slide-link:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-1px);
+        }
+
+        .carousel-controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .carousel-btn {
+            width: 50px;
+            height: 50px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.05);
+            border-radius: 50%;
+            color: #ffffff;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.3);
+            transform: translateY(-1px);
+        }
+
+        .carousel-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .carousel-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .indicator.active {
+            background: #ffffff;
+        }
+
+        /* Life */
+        .life-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+
+        .life-image-container {
+            position: relative;
+            max-width: 240px;
+            width: 100%;
+            margin-bottom: 0;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .life-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+
+        .life-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .life-image-container:hover .life-image-overlay {
+            opacity: 1;
+        }
+
+        .life-image-container:hover .life-image {
+            transform: scale(1.05);
+        }
+
+        .overlay-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+            line-height: 1.4;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 20px;
+            }
+
+            .name {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .nav {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .contact-links {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .projects-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline {
+                padding-left: 24px;
+            }
+
+            .carousel-slide {
+                flex-direction: column;
+                gap: 20px;
+                text-align: center;
+            }
+
+            .slide-image {
+                flex: none;
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+
+            .slide-content {
+                text-align: center;
+            }
+
+            .substack-carousel {
+                padding: 24px;
+            }
+
+            .life-image-container {
+                max-width: 100%;
+                margin-bottom: 30px;
+            }
+
+            .edit-controls {
+                top: 10px;
+                right: 10px;
+                flex-direction: column;
+            }
+
+            .edit-btn {
+                padding: 8px 16px;
+                font-size: 0.8rem;
+            }
+        }
+
+        .teals-image {
+            max-width: 320px;
+        }
+        @media (max-width: 768px) {
+            .teals-image {
+                max-width: 100%;
+            }
+        }
+
+        .project-icons {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+        .project-icon-link {
+            display: inline-flex;
+            align-items: center;
+            color: #9ca3af;
+            text-decoration: none;
+            transition: color 0.2s;
+            font-size: 1.2rem;
+        }
+        .project-icon-link:hover {
+            color: #fff;
+        }
+        .project-icon-link svg {
+            width: 22px;
+            height: 22px;
+            display: block;
+        }
+
+        .project-banner {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: #22c55e;
+            color: #fff;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 14px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(34,197,94,0.15);
+            z-index: 2;
+            letter-spacing: 1px;
+        }
+
+        .life-image-container.haiti-image {
+            max-width: 360px;
+        }
+        @media (max-width: 768px) {
+            .life-image-container.haiti-image {
+                max-width: 100%;
+            }
+        }
+
+        .project-card .project-banner + .project-icons {
+            margin-top: 32px;
+        }
+
+        .typewriter-container {
+            min-height: 32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="grain-overlay"></div>
+
+    <!-- Edit Controls -->
+    <div class="edit-controls">
+        <button class="edit-btn reset" onclick="resetToOriginal()">Reset to Original</button>
+    </div>
+    <div class="edit-indicator" id="editIndicator">
+        Double-click any text to edit
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <div class="profile-section">
+                <img src="https://cpenniman12.github.io/Cooper-Penniman-CV/assets/images/profile-new.jpg" alt="Profile" class="profile-image">
+                <h1 class="name" data-editable="name">Cooper Penniman</h1>
+                <div class="typewriter-container">
+                    <span id="typewriter-text" style="font-size:1.25rem; color:#9ca3af; font-weight:400;"></span>
+                </div>
+            </div>
+
+            <div class="contact-links">
+                <div class="contact-icons">
+                    <a class="contact-link" href="mailto:cooperpenniman@gmail.com" title="Email">
+                        <svg style="vertical-align:middle; margin-right:6px;" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 2v.01L12 13 4 6.01V6h16zM4 20V8.99l8 7 8-7V20H4z"/></svg>
+                        <span data-editable="email">cooperpenniman@gmail.com</span>
+                    </a>
+                    <span class="contact-link" title="Location" style="cursor:default;">
+                        <svg style="vertical-align:middle; margin-right:6px;" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+                        <span data-editable="location">New York</span>
+                    </span>
+                    <a class="contact-link" href="https://www.linkedin.com/in/cooper-penniman/" target="_blank" title="LinkedIn">
+                        <svg style="vertical-align:middle; margin-right:6px;" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.76 0-5 2.24-5 5v14c0 2.76 2.24 5 5 5h14c2.76 0 5-2.24 5-5v-14c0-2.76-2.24-5-5-5zm-11 19h-3v-10h3v10zm-1.5-11.28c-.97 0-1.75-.79-1.75-1.75s.78-1.75 1.75-1.75 1.75.79 1.75 1.75-.78 1.75-1.75 1.75zm13.5 11.28h-3v-5.6c0-1.34-.03-3.07-1.87-3.07-1.87 0-2.16 1.46-2.16 2.97v5.7h-3v-10h2.89v1.36h.04c.4-.75 1.37-1.54 2.82-1.54 3.01 0 3.57 1.98 3.57 4.56v5.62z"/></svg>
+                        LinkedIn
+                    </a>
+                </div>
+                <div class="bio" data-editable="bio" style="margin: 24px 0 0 0; color: #b3b3b3; font-size: 1.08rem; text-align: center; width: 100%;">
+                    Leveraging technology to solve real problems. Also passionate about Celtics Basketball, AI in education, and mentorship.
+                </div>
+            </div>
+
+            <div class="nav-container">
+                <div class="nav">
+                    <div class="nav-item active" onclick="showSection('experience', this)">Experience</div>
+                    <div class="nav-item" onclick="showSection('projects', this)">Weekend Projects</div>
+                    <div class="nav-item" onclick="showSection('education', this)">Education</div>
+                    <div class="nav-item" onclick="showSection('writings', this)">Writings</div>
+                    <div class="nav-item" onclick="showSection('skills', this)">Skills</div>
+                    <div class="nav-item" onclick="showSection('life', this)">Life</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section active" id="experience">
+                <h2 class="section-title">Experience</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="job-header">
+                            <div class="job-title" data-editable="job1-title">Product Manager</div>
+                            <div class="company" data-editable="job1-company">FactSet Research Systems</div>
+                            <div class="date" data-editable="job1-date">July 2025 - Present</div>
+                        </div>
+                        <p class="description" data-editable="job1-description">Leading development of an enterprise agentic chat system that accelerates product discovery and implementation. Leveraging deep expertise in FactSet database architecture to design a tool-call framework that maximizes contextual information delivery to language models while optimizing for cost efficiency and response speed. Key contributions include:<br><br>Streaming NL2SQL Architecture: Designed and implemented an asynchronous natural language-to-SQL pipeline that handles long-running queries while providing real-time progress updates, maintaining user engagement throughout complex data operations<br><br>Context-Optimized Tool Framework: Architected tool-call infrastructure that strategically balances comprehensive context delivery with performance constraints, ensuring rich model responses without latency or cost penalties</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="job-header">
+                            <div class="job-title" data-editable="job2-title">Implementation Specialist</div>
+                            <div class="company" data-editable="job2-company">FactSet Research Systems</div>
+                            <div class="date" data-editable="job2-date">November 2022 - July 2025</div>
+                        </div>
+                        <p class="description" data-editable="job2-description">Served as primary technical contact for enterprise clients implementing FactSet's Datafeeds and APIs. Delivered technical training sessions, partnered with sales teams to align client subscriptions with business requirements, and guided clients through integration workflows. Identified automation opportunities from frontline client interactions and championed development of an agentic system to streamline repetitive implementation tasks, bridging hands-on client experience with AI-driven efficiency improvements.</p>
+                    </div>
+
+                    <div class="timeline-item">
+                        <div class="job-header">
+                            <div class="job-title" data-editable="job3-title">Technical Consultant</div>
+                            <div class="company" data-editable="job3-company">Arclight Consulting | Oracle Partner</div>
+                            <div class="date" data-editable="job3-date">June 2021 - November 2022</div>
+                        </div>
+                        <p class="description" data-editable="job3-description">Wrote custom SQL queries including analytic functions, stored procedures, and unions. Created custom reports using Microsoft BI, XSL, and Oracle's built-in tools. Extracted, transformed, and loaded client data into Oracle's database while conducting regular client calls.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="projects">
+                <h2 class="section-title">Weekend Projects</h2>
+                <div class="projects-grid">
+                    <div class="project-card">
+                        <div class="project-icons">
+                            <a class="project-icon-link" href="https://github.com/cpenniman12/oura-daily-email" target="_blank" title="GitHub">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
+                            </a>
+                        </div>
+                        <div class="project-title" data-editable="project1-title">Oura Ring/Claude Integration</div>
+                        <div class="tech-stack" data-editable="project1-tech">Claude Desktop, Gmail MCP, Oura Ring API, Cron Jobs, Python</div>
+                        <p class="project-description" data-editable="project1-description">My Oura Ring is great though ideally the app would be better at suggesting actions I should take to improve my sleep.</p>
+                        <div class="project-how" data-editable="project1-how"><strong>How it works:</strong> This project solves that problem by scheduling Oura ring data to be sent via Gmail, which can then be fetched via the Claude mobile app. I can then chat with Claude about my health data and extract actionable insights.</div>
+                    </div>
+
+                    <div class="project-card">
+                        <div class="project-icons">
+                            <a class="project-icon-link" href="https://github.com/cpenniman12/ai-news-podcast" target="_blank" title="GitHub">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.58 2 12.26c0 4.5 2.87 8.32 6.84 9.67.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0 1 12 6.84c.85.004 1.71.12 2.51.35 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.81 0 .27.18.58.69.48A10.01 10.01 0 0 0 22 12.26C22 6.58 17.52 2 12 2z"/></svg>
+                            </a>
+                            <a class="project-icon-link website" href="https://ai-news-podcast-pqct.onrender.com" target="_blank" title="Visit Website">
+                                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 3v2h3.59L10 12.59 11.41 14 19 6.41V10h2V3z"/><path d="M5 5v14h14v-7h-2v5H7V7h5V5z"/></svg>
+                                <span style="margin-left:6px; font-size:0.98rem;">Try it out</span>
+                            </a>
+                        </div>
+                        <div class="project-title" data-editable="project2-title">Custom Podcast Generator</div>
+                        <div class="tech-stack" data-editable="project2-tech">TypeScript, OpenAI, TTS, Brave Search, Supabase DB</div>
+                        <p class="project-description" data-editable="project2-description">AI-powered web app to retrieve the latest AI news after my favorite daily news podcast was discontinued.</p>
+                        <div class="project-how" data-editable="project2-how"><strong>How it works:</strong> A web scraping API feeds news headlines into GPT, which curates them based on my criteria. Users select the most interesting headlines. GPT then creates 2-3 minute summaries for each, which are converted to audio using OpenAI TTS for a personalized podcast episode.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="education">
+                <h2 class="section-title">Education</h2>
+                <div class="education-list">
+                    <div class="education-item">
+                        <div class="degree" data-editable="degree">B.S. in Mathematics (Statistics Concentration); B.A. Economics</div>
+                        <div class="school" data-editable="school">University of Massachusetts, Amherst</div>
+                        <div class="date" data-editable="edu-date">September 2017 - June 2021</div>
+                        <p class="description" data-editable="edu-description">Conducted semester-long research project analyzing the impact of financial transaction tax with Professor Douglass Cliggot.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="writings">
+                <h2 class="section-title">Writings</h2>
+                <div class="substack-container">
+                    <div class="substack-carousel">
+                        <div class="carousel-track" id="carouselTrack">
+                            <div class="carousel-slide">
+                                <img src="https://cpenniman12.github.io/Cooper-Penniman-CV/assets/images/substack/ai-employee.png" alt="What I've Learned Managing an AI Employee Cover" class="slide-image">
+                                <div class="slide-content">
+                                    <h3 class="slide-title" data-editable="writing1-title">What I've Learned Managing an AI Employee</h3>
+                                    <div class="slide-date" data-editable="writing1-date">December 28, 2025</div>
+                                    <a href="https://cooper1122.substack.com/p/what-ive-learned-managing-an-ai-employee" target="_blank" class="slide-link">Read on Substack →</a>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <img src="https://cpenniman12.github.io/Cooper-Penniman-CV/assets/images/substack/tool-calling-verification.jpg" alt="Tool Calling and the Power of Verification Cover" class="slide-image">
+                                <div class="slide-content">
+                                    <h3 class="slide-title" data-editable="writing2-title">Tool Calling and the Power of Verification</h3>
+                                    <div class="slide-date" data-editable="writing2-date">December 14, 2025</div>
+                                    <a href="https://substack.com/home/post/p-181557853" target="_blank" class="slide-link">Read on Substack →</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="carousel-controls">
+                            <button class="carousel-btn" id="prevBtn" onclick="changeSlide(-1)">‹</button>
+                            <button class="carousel-btn" id="nextBtn" onclick="changeSlide(1)">›</button>
+                        </div>
+
+                        <div class="carousel-indicators">
+                            <div class="indicator active" onclick="goToSlide(0)"></div>
+                            <div class="indicator" onclick="goToSlide(1)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="skills">
+                <h2 class="section-title">Skills</h2>
+                <div class="skills-container">
+                    <div class="skills-grid">
+                        <div class="skill-item" data-editable="skill1">LangGraph</div>
+                        <div class="skill-item" data-editable="skill2">MCP</div>
+                        <div class="skill-item" data-editable="skill3">Prompt Engineering</div>
+                        <div class="skill-item" data-editable="skill4">SQL</div>
+                        <div class="skill-item" data-editable="skill5">Python</div>
+                        <div class="skill-item" data-editable="skill6">ETL</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section" id="life">
+                <h2 class="section-title">Life</h2>
+                <div class="life-container">
+                    <div class="life-image-container">
+                        <img src="https://cpenniman12.github.io/Cooper-Penniman-CV/assets/images/life-nyc.png" alt="Moving to New York" class="life-image">
+                        <div class="life-image-overlay">
+                            <div class="overlay-text" data-editable="life1">Moving to New York from Boston in fall of 2023.</div>
+                        </div>
+                    </div>
+
+                    <div class="life-image-container">
+                        <img src="https://cpenniman12.github.io/Cooper-Penniman-CV/assets/images/life-shanghai.png" alt="Shanghai Skyline" class="life-image">
+                        <div class="life-image-overlay">
+                            <div class="overlay-text" data-editable="life2">View of the Shanghai Skyline from my trip to China in December, 2024.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Original content storage
+        const originalContent = {};
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeEditableContent();
+            loadFromLocalStorage();
+            updateCarousel();
+            typeLoop();
+
+            // Show edit indicator
+            document.getElementById('editIndicator').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('editIndicator').style.display = 'none';
+            }, 5000);
+        });
+
+        // Initialize editable content
+        function initializeEditableContent() {
+            const editableElements = document.querySelectorAll('[data-editable]');
+
+            editableElements.forEach(element => {
+                const key = element.getAttribute('data-editable');
+
+                // Store original content
+                originalContent[key] = element.textContent || element.innerHTML;
+
+                // Add double-click listener
+                element.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    makeEditable(this);
+                });
+            });
+        }
+
+        // Make element editable
+        function makeEditable(element) {
+            if (element.contentEditable === 'true') return;
+
+            const key = element.getAttribute('data-editable');
+            const originalText = element.textContent;
+
+            element.contentEditable = true;
+            element.classList.add('editing');
+            element.focus();
+
+            // Select all text
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+
+            // Save on blur or Enter key
+            const saveEdit = () => {
+                element.contentEditable = false;
+                element.classList.remove('editing');
+
+                const newText = element.textContent;
+                if (newText !== originalText) {
+                    saveToLocalStorage(key, newText);
+                }
+            };
+
+            element.addEventListener('blur', saveEdit, { once: true });
+            element.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    element.blur();
+                } else if (e.key === 'Escape') {
+                    element.textContent = originalText;
+                    element.blur();
+                }
+            }, { once: true });
+        }
+
+        // Save to localStorage
+        function saveToLocalStorage(key, value) {
+            try {
+                const data = JSON.parse(localStorage.getItem('cvEdits') || '{}');
+                data[key] = value;
+                localStorage.setItem('cvEdits', JSON.stringify(data));
+                console.log('Saved:', key, value);
+            } catch (e) {
+                console.error('Error saving to localStorage:', e);
+            }
+        }
+
+        // Load from localStorage
+        function loadFromLocalStorage() {
+            try {
+                const data = JSON.parse(localStorage.getItem('cvEdits') || '{}');
+
+                Object.keys(data).forEach(key => {
+                    const element = document.querySelector(`[data-editable="${key}"]`);
+                    if (element) {
+                        element.textContent = data[key];
+                    }
+                });
+            } catch (e) {
+                console.error('Error loading from localStorage:', e);
+            }
+        }
+
+        // Reset to original
+        function resetToOriginal() {
+            if (!confirm('Are you sure you want to reset all content to the original? This cannot be undone.')) {
+                return;
+            }
+
+            localStorage.removeItem('cvEdits');
+
+            Object.keys(originalContent).forEach(key => {
+                const element = document.querySelector(`[data-editable="${key}"]`);
+                if (element) {
+                    element.textContent = originalContent[key];
+                }
+            });
+
+            alert('Reset complete! All content has been restored to the original.');
+        }
+
+        // Navigation
+        function showSection(sectionName, clickedElement) {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => item.classList.remove('active'));
+
+            if (clickedElement) {
+                clickedElement.classList.add('active');
+            }
+
+            const targetSection = document.getElementById(sectionName);
+            if (targetSection) {
+                targetSection.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        }
+
+        // Carousel functionality
+        let currentSlide = 0;
+        const totalSlides = 2;
+
+        function changeSlide(direction) {
+            currentSlide += direction;
+
+            if (currentSlide >= totalSlides) {
+                currentSlide = 0;
+            } else if (currentSlide < 0) {
+                currentSlide = totalSlides - 1;
+            }
+
+            updateCarousel();
+        }
+
+        function goToSlide(slideIndex) {
+            currentSlide = slideIndex;
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const track = document.getElementById('carouselTrack');
+            const indicators = document.querySelectorAll('.indicator');
+
+            const translateX = -currentSlide * 100;
+            track.style.transform = `translateX(${translateX}%)`;
+
+            indicators.forEach((indicator, index) => {
+                if (index === currentSlide) {
+                    indicator.classList.add('active');
+                } else {
+                    indicator.classList.remove('active');
+                }
+            });
+        }
+
+        // Typewriter effect
+        const words = [
+            "Solution Designer",
+            "Disruptor",
+            "Technologist",
+            "Developer",
+            "Strategist",
+            "Collaborator"
+        ];
+        let wordIndex = 0;
+        let charIndex = 0;
+        let isDeleting = false;
+        let speed = 80;
+        const typewriter = document.getElementById('typewriter-text');
+
+        function typeLoop() {
+            const currentWord = words[wordIndex];
+            if (!isDeleting && charIndex <= currentWord.length) {
+                typewriter.textContent = currentWord.substring(0, charIndex);
+                charIndex++;
+                if (charIndex > currentWord.length) {
+                    setTimeout(() => { isDeleting = true; typeLoop(); }, 1000);
+                    return;
+                }
+            } else if (isDeleting && charIndex >= 0) {
+                typewriter.textContent = currentWord.substring(0, charIndex);
+                charIndex--;
+                if (charIndex < 0) {
+                    isDeleting = false;
+                    wordIndex = (wordIndex + 1) % words.length;
+                    setTimeout(typeLoop, 500);
+                    return;
+                }
+            }
+            setTimeout(typeLoop, speed);
+        }
+    </script>
+</body>
+</html>
