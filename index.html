@@ -696,6 +696,34 @@
         .typewriter-container.hidden {
             display: none;
         }
+
+        /* Section visibility toggle */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 60px;
+        }
+
+        .section-toggle-btn {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .section-toggle-btn:hover {
+            background: rgba(255,255,255,0.15);
+            color: #ffffff;
+        }
+
+        .section-content.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -765,7 +793,11 @@
 
         <div class="content">
             <div class="section active" id="experience">
-                <h2 class="section-title" data-editable="exp-title">Experience</h2>
+                <div class="section-header">
+                    <h2 class="section-title" data-editable="exp-title">Experience</h2>
+                    <button class="section-toggle-btn" id="toggleExperience" onclick="toggleSection('experience')">Hide Section</button>
+                </div>
+                <div class="section-content" id="experienceContent">
                 <div class="timeline" id="experienceTimeline">
                     <div class="timeline-item" data-job-id="1">
                         <div class="job-header">
@@ -790,10 +822,15 @@
                 <div class="section-controls">
                     <button class="add-btn" onclick="addJob()">+ Add Job</button>
                 </div>
+                </div>
             </div>
 
             <div class="section" id="projects">
-                <h2 class="section-title" data-editable="proj-title">Weekend Projects</h2>
+                <div class="section-header">
+                    <h2 class="section-title" data-editable="proj-title">Weekend Projects</h2>
+                    <button class="section-toggle-btn" id="toggleProjects" onclick="toggleSection('projects')">Hide Section</button>
+                </div>
+                <div class="section-content" id="projectsContent">
                 <div class="projects-grid" id="projectsGrid">
                     <div class="project-card" data-project-id="1">
                         <div class="project-title" data-editable="project1-title">Oura Ring/Claude Integration</div>
@@ -812,10 +849,15 @@
                 <div class="section-controls">
                     <button class="add-btn" onclick="addProject()">+ Add Project</button>
                 </div>
+                </div>
             </div>
 
             <div class="section" id="education">
-                <h2 class="section-title" data-editable="edu-title">Education</h2>
+                <div class="section-header">
+                    <h2 class="section-title" data-editable="edu-title">Education</h2>
+                    <button class="section-toggle-btn" id="toggleEducation" onclick="toggleSection('education')">Hide Section</button>
+                </div>
+                <div class="section-content" id="educationContent">
                 <div class="education-list" id="educationList">
                     <div class="education-item" data-edu-id="1">
                         <div class="degree" data-editable="degree1">B.S. in Mathematics (Statistics Concentration); B.A. Economics</div>
@@ -828,10 +870,15 @@
                 <div class="section-controls">
                     <button class="add-btn" onclick="addEducation()">+ Add Education</button>
                 </div>
+                </div>
             </div>
 
             <div class="section" id="skills">
-                <h2 class="section-title" data-editable="skills-title">Skills</h2>
+                <div class="section-header">
+                    <h2 class="section-title" data-editable="skills-title">Skills</h2>
+                    <button class="section-toggle-btn" id="toggleSkills" onclick="toggleSection('skills')">Hide Section</button>
+                </div>
+                <div class="section-content" id="skillsContent">
                 <div class="skills-container">
                     <div class="skills-grid" id="skillsGrid">
                         <div class="skill-item" data-skill-id="1">
@@ -855,10 +902,15 @@
                 <div class="section-controls">
                     <button class="add-btn" onclick="addSkill()">+ Add Skill</button>
                 </div>
+                </div>
             </div>
 
             <div class="section" id="life">
-                <h2 class="section-title" data-editable="life-title">Life</h2>
+                <div class="section-header">
+                    <h2 class="section-title" data-editable="life-title">Life</h2>
+                    <button class="section-toggle-btn" id="toggleLife" onclick="toggleSection('life')">Hide Section</button>
+                </div>
+                <div class="section-content" id="lifeContent">
                 <div class="life-container" id="lifeContainer">
                     <div class="life-image-container" data-life-id="1">
                         <img src="https://cpenniman12.github.io/Cooper-Penniman-CV/assets/images/life-nyc.png" alt="Life moment" class="life-image">
@@ -884,6 +936,7 @@
                 </div>
                 <div class="section-controls">
                     <button class="add-btn" onclick="addLifeImage()">+ Add Image</button>
+                </div>
                 </div>
             </div>
         </div>
@@ -916,6 +969,15 @@
         ];
         let typewriterWords = [...defaultTypewriterWords];
         let typewriterVisible = true;
+
+        // Section visibility state
+        let sectionVisibility = {
+            experience: true,
+            projects: true,
+            education: true,
+            skills: true,
+            life: true
+        };
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -984,6 +1046,9 @@
                 const newText = element.textContent;
                 if (newText !== originalText) {
                     saveToLocalStorage(key, newText);
+
+                    // Sync nav items with section titles
+                    syncNavAndSectionTitles(key, newText);
                 }
             };
 
@@ -997,6 +1062,31 @@
                     element.blur();
                 }
             }, { once: true });
+        }
+
+        // Sync navigation items with section titles
+        function syncNavAndSectionTitles(key, newText) {
+            const mapping = {
+                'nav1': 'exp-title',
+                'exp-title': 'nav1',
+                'nav2': 'proj-title',
+                'proj-title': 'nav2',
+                'nav3': 'edu-title',
+                'edu-title': 'nav3',
+                'nav4': 'skills-title',
+                'skills-title': 'nav4',
+                'nav5': 'life-title',
+                'life-title': 'nav5'
+            };
+
+            const syncKey = mapping[key];
+            if (syncKey) {
+                const syncElement = document.querySelector(`[data-editable="${syncKey}"]`);
+                if (syncElement) {
+                    syncElement.textContent = newText;
+                    saveToLocalStorage(syncKey, newText);
+                }
+            }
         }
 
         // Save to localStorage
@@ -1042,6 +1132,12 @@
                 if (data['typewriterVisible'] !== undefined) {
                     typewriterVisible = data['typewriterVisible'];
                     updateTypewriterVisibility();
+                }
+
+                // Load section visibility
+                if (data['sectionVisibility']) {
+                    sectionVisibility = JSON.parse(data['sectionVisibility']);
+                    updateAllSectionVisibility();
                 }
             } catch (e) {
                 console.error('Error loading from localStorage:', e);
@@ -1369,6 +1465,36 @@
                 container.classList.add('hidden');
                 toggleBtn.textContent = 'Show';
             }
+        }
+
+        // Toggle Section Visibility
+        function toggleSection(sectionName) {
+            sectionVisibility[sectionName] = !sectionVisibility[sectionName];
+            saveToLocalStorage('sectionVisibility', JSON.stringify(sectionVisibility));
+            updateSectionVisibility(sectionName);
+        }
+
+        // Update Section Visibility
+        function updateSectionVisibility(sectionName) {
+            const content = document.getElementById(sectionName + 'Content');
+            const toggleBtn = document.getElementById('toggle' + sectionName.charAt(0).toUpperCase() + sectionName.slice(1));
+
+            if (content && toggleBtn) {
+                if (sectionVisibility[sectionName]) {
+                    content.classList.remove('hidden');
+                    toggleBtn.textContent = 'Hide Section';
+                } else {
+                    content.classList.add('hidden');
+                    toggleBtn.textContent = 'Show Section';
+                }
+            }
+        }
+
+        // Update All Section Visibility
+        function updateAllSectionVisibility() {
+            Object.keys(sectionVisibility).forEach(sectionName => {
+                updateSectionVisibility(sectionName);
+            });
         }
 
         // Handle image upload
