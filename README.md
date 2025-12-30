@@ -33,11 +33,16 @@ A completely customizable CV website where users can edit all text, add/delete s
 - Enter custom words separated by commas (e.g., "Designer, Coder, Artist")
 
 ### Section Management
-- **Hide/Show Sections**: Each section has a "Hide Section" button
+- **Hide/Show Sections**: Each section has a "Hide" button to toggle visibility
+- **Delete Sections**: Each section has a "Delete" button to permanently remove it
+- **Add New Sections**: Click "+ Add Section" to add custom sections:
+  - Certifications
+  - Awards
+  - Publications
 - **Synced Navigation**: Edit nav items or section titles - they sync automatically
   - Change "Experience" in nav → updates "Experience" section title
   - Change "Experience" section title → updates nav item
-- Visibility persists across page refreshes
+- Visibility and deletions persist across page refreshes
 
 ### Other Features
 - **Reset Button**: Restore everything to original state
@@ -68,6 +73,23 @@ A completely customizable CV website where users can edit all text, add/delete s
 - Education (+ Add Education)
 - Skills (+ Add Skill)
 - Life Images (+ Add Image)
+
+### Delete/Add Sections
+
+**Delete a Section:**
+1. Click "Delete" button next to section title
+2. Confirm deletion
+3. Section is permanently hidden (use "Reset All" to restore)
+
+**Add a New Section:**
+1. Scroll to bottom and click "+ Add Section"
+2. Choose section type:
+   - 1 = Certifications
+   - 2 = Awards
+   - 3 = Publications
+3. New section appears with sample content
+4. Double-click to edit all fields
+5. Use "+ Add" button within section to add more items
 
 ### Change Images
 

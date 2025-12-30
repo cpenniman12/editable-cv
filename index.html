@@ -721,8 +721,45 @@
             color: #ffffff;
         }
 
+        .section-toggle-btn.delete {
+            background: rgba(239, 68, 68, 0.2);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .section-toggle-btn.delete:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
         .section-content.hidden {
             display: none;
+        }
+
+        .section.hidden {
+            display: none;
+        }
+
+        /* Add section button */
+        .add-section-container {
+            text-align: center;
+            margin: 80px 0;
+        }
+
+        .add-section-btn {
+            padding: 16px 32px;
+            font-size: 1rem;
+            background: rgba(34, 197, 94, 0.2);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            border-radius: 8px;
+            color: #22c55e;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .add-section-btn:hover {
+            background: rgba(34, 197, 94, 0.3);
+            transform: translateY(-1px);
         }
     </style>
 </head>
@@ -792,10 +829,13 @@
         </div>
 
         <div class="content">
-            <div class="section active" id="experience">
+            <div class="section active" id="experience" data-section-type="default">
                 <div class="section-header">
                     <h2 class="section-title" data-editable="exp-title">Experience</h2>
-                    <button class="section-toggle-btn" id="toggleExperience" onclick="toggleSection('experience')">Hide Section</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="section-toggle-btn" id="toggleExperience" onclick="toggleSection('experience')">Hide</button>
+                        <button class="section-toggle-btn delete" onclick="deleteSection('experience')">Delete</button>
+                    </div>
                 </div>
                 <div class="section-content" id="experienceContent">
                 <div class="timeline" id="experienceTimeline">
@@ -825,10 +865,13 @@
                 </div>
             </div>
 
-            <div class="section" id="projects">
+            <div class="section" id="projects" data-section-type="default">
                 <div class="section-header">
                     <h2 class="section-title" data-editable="proj-title">Weekend Projects</h2>
-                    <button class="section-toggle-btn" id="toggleProjects" onclick="toggleSection('projects')">Hide Section</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="section-toggle-btn" id="toggleProjects" onclick="toggleSection('projects')">Hide</button>
+                        <button class="section-toggle-btn delete" onclick="deleteSection('projects')">Delete</button>
+                    </div>
                 </div>
                 <div class="section-content" id="projectsContent">
                 <div class="projects-grid" id="projectsGrid">
@@ -852,10 +895,13 @@
                 </div>
             </div>
 
-            <div class="section" id="education">
+            <div class="section" id="education" data-section-type="default">
                 <div class="section-header">
                     <h2 class="section-title" data-editable="edu-title">Education</h2>
-                    <button class="section-toggle-btn" id="toggleEducation" onclick="toggleSection('education')">Hide Section</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="section-toggle-btn" id="toggleEducation" onclick="toggleSection('education')">Hide</button>
+                        <button class="section-toggle-btn delete" onclick="deleteSection('education')">Delete</button>
+                    </div>
                 </div>
                 <div class="section-content" id="educationContent">
                 <div class="education-list" id="educationList">
@@ -873,10 +919,13 @@
                 </div>
             </div>
 
-            <div class="section" id="skills">
+            <div class="section" id="skills" data-section-type="default">
                 <div class="section-header">
                     <h2 class="section-title" data-editable="skills-title">Skills</h2>
-                    <button class="section-toggle-btn" id="toggleSkills" onclick="toggleSection('skills')">Hide Section</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="section-toggle-btn" id="toggleSkills" onclick="toggleSection('skills')">Hide</button>
+                        <button class="section-toggle-btn delete" onclick="deleteSection('skills')">Delete</button>
+                    </div>
                 </div>
                 <div class="section-content" id="skillsContent">
                 <div class="skills-container">
@@ -905,10 +954,13 @@
                 </div>
             </div>
 
-            <div class="section" id="life">
+            <div class="section" id="life" data-section-type="default">
                 <div class="section-header">
                     <h2 class="section-title" data-editable="life-title">Life</h2>
-                    <button class="section-toggle-btn" id="toggleLife" onclick="toggleSection('life')">Hide Section</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="section-toggle-btn" id="toggleLife" onclick="toggleSection('life')">Hide</button>
+                        <button class="section-toggle-btn delete" onclick="deleteSection('life')">Delete</button>
+                    </div>
                 </div>
                 <div class="section-content" id="lifeContent">
                 <div class="life-container" id="lifeContainer">
@@ -938,6 +990,10 @@
                     <button class="add-btn" onclick="addLifeImage()">+ Add Image</button>
                 </div>
                 </div>
+            </div>
+
+            <div class="add-section-container">
+                <button class="add-section-btn" onclick="showAddSectionOptions()">+ Add Section</button>
             </div>
         </div>
     </div>
@@ -978,6 +1034,12 @@
             skills: true,
             life: true
         };
+
+        // Deleted sections tracking
+        let deletedSections = [];
+
+        // Custom sections counter
+        let customSectionCounter = 1;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -1139,6 +1201,22 @@
                     sectionVisibility = JSON.parse(data['sectionVisibility']);
                     updateAllSectionVisibility();
                 }
+
+                // Load deleted sections
+                if (data['deletedSections']) {
+                    deletedSections = JSON.parse(data['deletedSections']);
+                    deletedSections.forEach(sectionName => {
+                        const section = document.getElementById(sectionName);
+                        if (section) {
+                            section.classList.add('hidden');
+                        }
+                    });
+                }
+
+                // Load custom section counter
+                if (data['customSectionCounter']) {
+                    customSectionCounter = data['customSectionCounter'];
+                }
             } catch (e) {
                 console.error('Error loading from localStorage:', e);
             }
@@ -1167,7 +1245,12 @@
                     id: el.dataset.lifeId,
                     html: el.outerHTML
                 })),
-                nextIds: { nextJobId, nextProjectId, nextEduId, nextSkillId, nextLifeId }
+                customSections: Array.from(document.querySelectorAll('[data-section-type="custom"]')).map(el => ({
+                    id: el.id,
+                    html: el.outerHTML
+                })),
+                nextIds: { nextJobId, nextProjectId, nextEduId, nextSkillId, nextLifeId },
+                customSectionCounter: customSectionCounter
             };
 
             localStorage.setItem(STRUCTURE_KEY, JSON.stringify(structure));
@@ -1186,6 +1269,11 @@
                     nextEduId = structure.nextIds.nextEduId || nextEduId;
                     nextSkillId = structure.nextIds.nextSkillId || nextSkillId;
                     nextLifeId = structure.nextIds.nextLifeId || nextLifeId;
+                }
+
+                // Restore custom section counter
+                if (structure.customSectionCounter) {
+                    customSectionCounter = structure.customSectionCounter;
                 }
 
                 // Restore jobs
@@ -1216,6 +1304,22 @@
                 if (structure.life && structure.life.length) {
                     const container = document.getElementById('lifeContainer');
                     container.innerHTML = structure.life.map(l => l.html).join('');
+                }
+
+                // Restore custom sections
+                if (structure.customSections && structure.customSections.length) {
+                    const content = document.querySelector('.content');
+                    const addSectionContainer = document.querySelector('.add-section-container');
+
+                    structure.customSections.forEach(section => {
+                        const sectionElement = document.createElement('div');
+                        sectionElement.innerHTML = section.html;
+                        const sectionNode = sectionElement.firstElementChild;
+                        content.insertBefore(sectionNode, addSectionContainer);
+
+                        // Initialize visibility for restored custom section
+                        sectionVisibility[section.id] = true;
+                    });
                 }
             } catch (e) {
                 console.error('Error loading structure:', e);
@@ -1495,6 +1599,207 @@
             Object.keys(sectionVisibility).forEach(sectionName => {
                 updateSectionVisibility(sectionName);
             });
+        }
+
+        // Delete Section
+        function deleteSection(sectionName) {
+            if (!confirm(`Delete the entire "${sectionName}" section? This cannot be undone without resetting all changes.`)) {
+                return;
+            }
+
+            const section = document.getElementById(sectionName);
+            if (section) {
+                section.classList.add('hidden');
+                deletedSections.push(sectionName);
+                saveToLocalStorage('deletedSections', JSON.stringify(deletedSections));
+            }
+        }
+
+        // Show Add Section Options
+        function showAddSectionOptions() {
+            const sectionTypes = `Choose a section type to add:
+
+1. Certifications
+2. Awards
+3. Publications
+
+Enter the number (1-3):`;
+
+            const choice = prompt(sectionTypes);
+
+            if (choice === '1') {
+                addNewSection('certifications', 'Certifications');
+            } else if (choice === '2') {
+                addNewSection('awards', 'Awards');
+            } else if (choice === '3') {
+                addNewSection('publications', 'Publications');
+            } else if (choice !== null) {
+                alert('Invalid choice. Please select 1, 2, or 3.');
+            }
+        }
+
+        // Add New Section
+        function addNewSection(type, title) {
+            const sectionId = type + customSectionCounter;
+            customSectionCounter++;
+
+            const content = document.querySelector('.content');
+            const addSectionContainer = document.querySelector('.add-section-container');
+
+            const newSection = document.createElement('div');
+            newSection.className = 'section';
+            newSection.id = sectionId;
+            newSection.setAttribute('data-section-type', 'custom');
+
+            let sectionHTML = '';
+
+            if (type === 'certifications') {
+                sectionHTML = `
+                    <div class="section-header">
+                        <h2 class="section-title" data-editable="${sectionId}-title">${title}</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="section-toggle-btn" onclick="toggleSection('${sectionId}')">Hide</button>
+                            <button class="section-toggle-btn delete" onclick="deleteSection('${sectionId}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="section-content" id="${sectionId}Content">
+                        <div class="education-list" id="${sectionId}List">
+                            <div class="education-item" data-cert-id="1">
+                                <div class="degree" data-editable="${sectionId}-cert1-name">Certification Name</div>
+                                <div class="school" data-editable="${sectionId}-cert1-org">Issuing Organization</div>
+                                <div class="date" data-editable="${sectionId}-cert1-date">Issue Date</div>
+                                <p class="description" data-editable="${sectionId}-cert1-desc">Description of certification.</p>
+                                <button class="delete-btn" onclick="this.closest('.education-item').remove(); saveStructure();">Delete</button>
+                            </div>
+                        </div>
+                        <div class="section-controls">
+                            <button class="add-btn" onclick="addCertification('${sectionId}')">+ Add Certification</button>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'awards') {
+                sectionHTML = `
+                    <div class="section-header">
+                        <h2 class="section-title" data-editable="${sectionId}-title">${title}</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="section-toggle-btn" onclick="toggleSection('${sectionId}')">Hide</button>
+                            <button class="section-toggle-btn delete" onclick="deleteSection('${sectionId}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="section-content" id="${sectionId}Content">
+                        <div class="education-list" id="${sectionId}List">
+                            <div class="education-item" data-award-id="1">
+                                <div class="degree" data-editable="${sectionId}-award1-name">Award Name</div>
+                                <div class="school" data-editable="${sectionId}-award1-org">Awarding Organization</div>
+                                <div class="date" data-editable="${sectionId}-award1-date">Award Date</div>
+                                <p class="description" data-editable="${sectionId}-award1-desc">Description of award.</p>
+                                <button class="delete-btn" onclick="this.closest('.education-item').remove(); saveStructure();">Delete</button>
+                            </div>
+                        </div>
+                        <div class="section-controls">
+                            <button class="add-btn" onclick="addAward('${sectionId}')">+ Add Award</button>
+                        </div>
+                    </div>
+                `;
+            } else if (type === 'publications') {
+                sectionHTML = `
+                    <div class="section-header">
+                        <h2 class="section-title" data-editable="${sectionId}-title">${title}</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="section-toggle-btn" onclick="toggleSection('${sectionId}')">Hide</button>
+                            <button class="section-toggle-btn delete" onclick="deleteSection('${sectionId}')">Delete</button>
+                        </div>
+                    </div>
+                    <div class="section-content" id="${sectionId}Content">
+                        <div class="education-list" id="${sectionId}List">
+                            <div class="education-item" data-pub-id="1">
+                                <div class="degree" data-editable="${sectionId}-pub1-title">Publication Title</div>
+                                <div class="school" data-editable="${sectionId}-pub1-venue">Publication Venue</div>
+                                <div class="date" data-editable="${sectionId}-pub1-date">Publication Date</div>
+                                <p class="description" data-editable="${sectionId}-pub1-desc">Brief description or abstract.</p>
+                                <button class="delete-btn" onclick="this.closest('.education-item').remove(); saveStructure();">Delete</button>
+                            </div>
+                        </div>
+                        <div class="section-controls">
+                            <button class="add-btn" onclick="addPublication('${sectionId}')">+ Add Publication</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            newSection.innerHTML = sectionHTML;
+            content.insertBefore(newSection, addSectionContainer);
+
+            // Initialize visibility for new section
+            sectionVisibility[sectionId] = true;
+
+            saveStructure();
+        }
+
+        // Add Certification
+        function addCertification(sectionId) {
+            const list = document.getElementById(sectionId + 'List');
+            const items = list.querySelectorAll('[data-cert-id]');
+            const nextId = items.length + 1;
+
+            const newItem = document.createElement('div');
+            newItem.className = 'education-item';
+            newItem.setAttribute('data-cert-id', nextId);
+
+            newItem.innerHTML = `
+                <div class="degree" data-editable="${sectionId}-cert${nextId}-name">Certification Name</div>
+                <div class="school" data-editable="${sectionId}-cert${nextId}-org">Issuing Organization</div>
+                <div class="date" data-editable="${sectionId}-cert${nextId}-date">Issue Date</div>
+                <p class="description" data-editable="${sectionId}-cert${nextId}-desc">Description of certification.</p>
+                <button class="delete-btn" onclick="this.closest('.education-item').remove(); saveStructure();">Delete</button>
+            `;
+
+            list.appendChild(newItem);
+            saveStructure();
+        }
+
+        // Add Award
+        function addAward(sectionId) {
+            const list = document.getElementById(sectionId + 'List');
+            const items = list.querySelectorAll('[data-award-id]');
+            const nextId = items.length + 1;
+
+            const newItem = document.createElement('div');
+            newItem.className = 'education-item';
+            newItem.setAttribute('data-award-id', nextId);
+
+            newItem.innerHTML = `
+                <div class="degree" data-editable="${sectionId}-award${nextId}-name">Award Name</div>
+                <div class="school" data-editable="${sectionId}-award${nextId}-org">Awarding Organization</div>
+                <div class="date" data-editable="${sectionId}-award${nextId}-date">Award Date</div>
+                <p class="description" data-editable="${sectionId}-award${nextId}-desc">Description of award.</p>
+                <button class="delete-btn" onclick="this.closest('.education-item').remove(); saveStructure();">Delete</button>
+            `;
+
+            list.appendChild(newItem);
+            saveStructure();
+        }
+
+        // Add Publication
+        function addPublication(sectionId) {
+            const list = document.getElementById(sectionId + 'List');
+            const items = list.querySelectorAll('[data-pub-id]');
+            const nextId = items.length + 1;
+
+            const newItem = document.createElement('div');
+            newItem.className = 'education-item';
+            newItem.setAttribute('data-pub-id', nextId);
+
+            newItem.innerHTML = `
+                <div class="degree" data-editable="${sectionId}-pub${nextId}-title">Publication Title</div>
+                <div class="school" data-editable="${sectionId}-pub${nextId}-venue">Publication Venue</div>
+                <div class="date" data-editable="${sectionId}-pub${nextId}-date">Publication Date</div>
+                <p class="description" data-editable="${sectionId}-pub${nextId}-desc">Brief description or abstract.</p>
+                <button class="delete-btn" onclick="this.closest('.education-item').remove(); saveStructure();">Delete</button>
+            `;
+
+            list.appendChild(newItem);
+            saveStructure();
         }
 
         // Handle image upload
