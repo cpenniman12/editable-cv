@@ -1,139 +1,258 @@
-# Editable CV Site with LocalStorage
+# Fully Editable CV Site with LocalStorage
 
-An editable version of your CV website where users can customize content and save changes locally using browser localStorage.
+A completely customizable CV website where users can edit all text, add/delete sections, and even change images - all saved locally using browser localStorage.
 
 ## Features
 
-- **Double-Click to Edit**: Click on any text to edit it in place
-- **Auto-Save**: Changes are automatically saved to your browser's localStorage
-- **Persistent**: Your edits persist across page refreshes (only on your browser)
-- **Reset Button**: Restore all content to original values
-- **Visual Feedback**: Editing mode shows a subtle highlight
-- **Responsive Design**: Works on desktop and mobile devices
+### Text Editing
+- **Double-Click to Edit**: Any text on the page can be edited
+- **Auto-Save**: Changes automatically save to localStorage
+- **Persistent**: Edits remain across page refreshes
+
+### Section Management
+- **Add/Delete Jobs**: Add new work experience, delete old ones
+- **Add/Delete Projects**: Manage your project portfolio
+- **Add/Delete Education**: Add multiple degrees/certifications
+- **Add/Delete Skills**: Customize your skillset
+- **Add/Delete Images**: Manage your life/portfolio images
+
+### Image Management
+- **Change Profile Picture**: Upload your own photo (converts to base64)
+- **Change Life Images**: Replace any image with your own
+- **Add New Images**: Add more images to your life section
+- **Delete Images**: Remove images you don't want
+
+### Other Features
+- **Reset Button**: Restore everything to original state
+- **Visual Feedback**: Hover effects show what's editable
+- **Responsive Design**: Works on desktop and mobile
+- **No Server Needed**: Completely client-side
 
 ## How to Use
 
-1. **Edit Content**: Double-click any editable text (name, job titles, descriptions, etc.)
-2. **Save**: Press Enter or click outside the text to save
-3. **Cancel**: Press Escape to cancel editing
-4. **Reset**: Click "Reset to Original" button to restore all content
+### Edit Text
+1. **Double-click** any text (name, job titles, descriptions, etc.)
+2. Type your changes
+3. Press **Enter** to save or **Escape** to cancel
+4. Changes are automatically saved
 
-## What Can Be Edited?
+### Add/Delete Sections
 
-Almost everything:
-- Your name
-- Contact information (email, location)
-- Bio/tagline
-- Job titles, companies, and dates
-- Job descriptions
-- Project titles and descriptions
-- Education details
-- Skills
-- Writing titles and dates
-- Life captions
+**Add a Job:**
+1. Scroll to Experience section
+2. Click "+ Add Job" button
+3. Double-click each field to edit
 
-## How It Works
+**Delete a Job:**
+- Click "Delete Job" button on any job entry
 
-- **localStorage**: All edits are stored in your browser's localStorage
-- **No Server**: Everything runs client-side, no backend needed
-- **Privacy**: Your edits are only visible to you on your device
-- **GitHub Pages Compatible**: Works perfectly as a static site
+**Same process works for:**
+- Projects (+ Add Project)
+- Education (+ Add Education)
+- Skills (+ Add Skill)
+- Life Images (+ Add Image)
 
-## Deploying to GitHub Pages
+### Change Images
 
-### Option 1: Create New Repository
+**Profile Picture:**
+1. Hover over your profile image
+2. Click "Change" button
+3. Select an image file from your computer
+4. Image is converted to base64 and saved locally
 
-1. Create a new repository on GitHub (e.g., `editable-cv`)
-2. Clone this directory or push the files:
-   ```bash
-   cd editable-cv-site
-   git init
-   git add .
-   git commit -m "Initial commit: Editable CV"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/editable-cv.git
-   git push -u origin main
-   ```
+**Life/Portfolio Images:**
+1. Hover over any image in the Life section
+2. Click "Change" to replace or "Delete" to remove
+3. Click "+ Add Image" to add new images
 
-3. Enable GitHub Pages:
-   - Go to repository Settings
-   - Navigate to "Pages" section
-   - Under "Source", select branch `main` and folder `/ (root)`
-   - Click Save
-   - Your site will be live at `https://YOUR_USERNAME.github.io/editable-cv/`
+### Reset Everything
+- Click "Reset All" button in top-right
+- Confirms before resetting
+- Reloads page with original content
 
-### Option 2: Use Existing Repository
+## What Gets Saved
 
-1. Copy `index.html` to your existing repository
-2. Commit and push:
-   ```bash
-   git add index.html
-   git commit -m "Add editable CV version"
-   git push
-   ```
-
-3. Access it at: `https://YOUR_USERNAME.github.io/REPO_NAME/index.html`
+Everything is stored in your browser's localStorage:
+- All text edits (name, bio, job descriptions, etc.)
+- Structural changes (added/deleted jobs, projects, skills)
+- Image changes (stored as base64 data URLs)
+- Section order and content
 
 ## Technical Details
 
-### Browser Storage
-- Uses `localStorage` API
-- Storage key: `cvEdits`
-- Data format: JSON object with key-value pairs
-- Storage limit: ~5-10MB (varies by browser)
+### Storage
+- **localStorage Key**: `cvEdits` (for text content)
+- **localStorage Key**: `cvStructure` (for sections/structure)
+- **Storage Limit**: ~5-10MB per domain (varies by browser)
+- **Image Format**: Base64 data URLs
 
-### Compatibility
+### Browser Compatibility
 - Modern browsers (Chrome, Firefox, Safari, Edge)
 - Mobile browsers supported
 - No external dependencies
 - Pure HTML, CSS, and vanilla JavaScript
 
 ### Data Persistence
-- **Same Device + Same Browser**: Edits persist
-- **Different Device**: Original content shown
-- **Different Browser**: Original content shown
+- **Same Device + Same Browser**: All edits persist
+- **Different Device**: Shows original content
+- **Different Browser**: Shows original content
 - **Private/Incognito Mode**: Edits lost when window closes
+- **Clear Browser Data**: Edits lost if localStorage is cleared
+
+## Deploying to GitHub Pages
+
+Already deployed at: **https://cpenniman12.github.io/editable-cv/**
+
+To update:
+```bash
+git add .
+git commit -m "Update editable CV"
+git push
+```
+
+Changes will be live in 1-2 minutes.
 
 ## Customization
 
-### Add More Editable Fields
+### Make More Content Editable
 
-To make more content editable, add the `data-editable` attribute:
+Add the `data-editable` attribute with a unique key:
 
 ```html
-<div data-editable="unique-key">Your content here</div>
+<div data-editable="unique-key-here">Your content</div>
 ```
 
-### Change Colors
+### Add New Section Types
 
-Edit the CSS variables in the `<style>` section:
+1. Create HTML structure with unique data attributes
+2. Add add/delete functions in JavaScript
+3. Update `saveStructure()` and `loadStructure()` functions
+
+### Change Styling
+
+All styles are in the `<style>` section:
 - Edit button colors
-- Hover effects
-- Border colors
+- Change hover effects
+- Modify section layouts
+- Adjust responsive breakpoints
 
-### Disable Editing on Specific Elements
+## File Structure
 
-Remove the `data-editable` attribute from elements you want to keep static.
+```
+editable-cv-site/
+├── index.html          # Main editable CV page
+├── README.md           # This file
+└── original.html       # Reference copy of original site
+```
+
+## How It Works
+
+### localStorage Architecture
+
+**Two Storage Keys:**
+1. `cvEdits`: Stores all text content changes
+   ```json
+   {
+     "name": "John Smith",
+     "job1-title": "Software Engineer",
+     "bio": "Custom bio text..."
+   }
+   ```
+
+2. `cvStructure`: Stores dynamic sections (jobs, projects, etc.)
+   ```json
+   {
+     "jobs": [...],
+     "projects": [...],
+     "skills": [...],
+     "life": [...],
+     "nextIds": {...}
+   }
+   ```
+
+### Image Storage
+
+Images are converted to base64 data URLs:
+- Selected via file input
+- Converted using FileReader API
+- Stored as data URL strings in localStorage
+- Automatically loaded on page refresh
+
+**Note:** Large images increase localStorage usage. Consider:
+- Resizing images before upload
+- Using smaller file sizes
+- Limiting number of uploaded images
+
+## Browser localStorage Limits
+
+Typical limits per domain:
+- **Chrome/Firefox**: ~10MB
+- **Safari**: ~5MB
+- **Mobile browsers**: ~5MB
+
+**Tips:**
+- Compress images before uploading
+- Don't add too many large images
+- Use "Reset All" to clear storage if needed
+
+## Privacy
+
+- All data stored locally in your browser
+- Nothing sent to any server
+- Each user's edits are completely private
+- Only visible on their device/browser
+
+## Use Cases
+
+1. **Personal Resume Template**: Users customize CV for themselves
+2. **Portfolio Builder**: Edit to create personalized portfolios
+3. **CV Workshop**: Practice tailoring resumes for different roles
+4. **Template Experimentation**: Try different content/layouts
+
+## Limitations
+
+- localStorage limited by browser (5-10MB)
+- Large base64 images use significant storage
+- Edits don't sync across devices
+- No user accounts/authentication
+- No server-side persistence
+
+## Browser Developer Tools
+
+View your saved data:
+1. Open browser DevTools (F12)
+2. Go to "Application" tab
+3. Select "Local Storage"
+4. Find your domain
+5. See `cvEdits` and `cvStructure` keys
 
 ## Troubleshooting
 
 **Edits not saving?**
+- Check if localStorage is enabled (disabled in some privacy modes)
 - Check browser console for errors
-- Ensure localStorage is enabled (some privacy modes disable it)
 - Try a different browser
 
+**Images not loading?**
+- File size may be too large
+- Try smaller/compressed images
+- Check localStorage usage
+
+**Page looks broken?**
+- Click "Reset All" to restore
+- Clear browser cache and reload
+- Check browser console for errors
+
 **Can't edit text?**
-- Make sure you're double-clicking, not single-clicking
-- Check that the element has `data-editable` attribute
-
-**Reset button not working?**
-- Clear browser cache
-- Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
-
-## Privacy Note
-
-All edits are stored locally in your browser. No data is sent to any server. Each visitor's edits are completely private to them.
+- Make sure you're double-clicking (not single-click)
+- Element must have `data-editable` attribute
+- Check if JavaScript is enabled
 
 ## License
 
-Feel free to use this as a template for your own editable CV!
+Free to use and modify for your own projects!
+
+## Credits
+
+Based on Cooper Penniman's original CV design.
+Enhanced with full editing capabilities using localStorage.
